@@ -1,0 +1,16 @@
+{
+  "name": "Model 8 — DIM8 Pinball",
+  "short_name": "Model 8",
+  "description": "A vintage-computer pinball table. No ads, no tracking, no leaderboards.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#050607",
+  "theme_color": "#050607",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
