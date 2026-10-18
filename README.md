@@ -25,3 +25,6 @@ Share > Add to Home Screen. Bump VERSION in sw.js whenever a file changes.
 
 ## Files
 index.html (whole game, no dependencies), manifest.webmanifest, sw.js, icons/.
+
+## iOS 27 top blur workaround
+Installed iOS PWAs get a blur band over the top of the screen. A solid fixed strip (#topfix, color var(--bg)) at the top stops it; it only shows in the installed iOS app. It's a community workaround, not an Apple API; remove the #topfix CSS block and element if a future iOS changes things.
