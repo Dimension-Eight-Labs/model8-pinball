@@ -25,9 +25,9 @@ body{position:fixed;inset:0;-webkit-user-select:none;user-select:none;-webkit-to
 @media (display-mode: standalone){
   #topfix{display:block;position:fixed;top:0;left:0;right:0;height:12px;background:var(--hud);pointer-events:none;z-index:0}
 }
-#stage{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;touch-action:none}
+#stage{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0}
 canvas{display:block;width:390px;height:844px;touch-action:none}
-button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
+button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation}
 .hudbtn{position:absolute;top:14px;width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;padding:0}
 .hudbtn svg{width:22px;height:22px}
 .hudbtn.muted{border-color:var(--amber);background:#2a1d0c;color:var(--amber)}
@@ -39,9 +39,17 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 .sec{flex:1;height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);font-size:13px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:10px}
 .sec.muted{border-color:var(--amber);background:#2a1d0c;color:var(--amber)}
 .sec svg{width:20px;height:20px}
-#help{position:absolute;left:20px;right:20px;top:96px;z-index:5;display:flex;flex-direction:column;gap:16px;background:#0a0d0e;border:1px solid #1e2a2b;border-radius:14px;padding:20px}
-#help p{margin:0;font-size:14px;line-height:1.65;color:#9fc2b8}
-#help b{color:var(--vfd);font-weight:400}
+#help{position:absolute;left:16px;right:16px;top:24px;bottom:24px;z-index:5;display:flex;flex-direction:column;gap:14px;background:#0a0d0e;border:1px solid #1e2a2b;border-radius:14px;padding:20px 20px 16px}
+#help h2{margin:0;font-size:15px;font-weight:400;letter-spacing:4px;color:var(--vfd)}
+#helpBody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-right:6px;font-size:13.5px;line-height:1.55;color:#9fc2b8}
+#helpBody{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent);padding-bottom:24px}
+#helpBody:focus-visible{outline:1px solid var(--line);outline-offset:4px}
+#helpBody h3{margin:18px 0 8px;font-size:11px;font-weight:400;letter-spacing:3px;color:var(--amber)}
+#helpBody h3:first-child{margin-top:0}
+#helpBody dl{margin:0}
+#helpBody dt{color:var(--vfd)}
+#helpBody dd{margin:2px 0 12px}
+#helpBody p{margin:0}
 #bHelpClose{flex:none}
 #bBump{flex:none;height:44px}
 [hidden]{display:none!important}
@@ -54,8 +62,28 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
   <canvas id="cv" aria-label="Model 8 pinball table" role="img"></canvas>
   <button id="bMute" class="hudbtn" aria-label="Mute sound" hidden></button>
   <button id="bPause" class="hudbtn" aria-label="Pause" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
-  <div id="help" hidden>
-    <p><b>Hold left / right half</b> of the screen for each flipper. <b>Drag down on the right</b> to pull the plunger, let go to launch (a tap gives a standard shot). Light <b>L-O-A-D</b> to raise the bonus multiplier &mdash; flipping moves the lit lanes. Knock down the <b>punch card</b>, ride the <b>bus ramp</b> and sink the <b>core memory</b> saucer to store bits. Eight bits is a byte. <b>Bump the phone</b> to nudge the table &mdash; overdo it and it&rsquo;s TILT.</p>
+  <div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+    <h2 id="helpTitle">HOW TO PLAY</h2>
+    <div id="helpBody" tabindex="0">
+      <h3>Controls</h3>
+      <dl>
+        <dt>Flippers</dt><dd>Hold the left or right half of the screen. Hold to cradle the ball, let go to drop it.</dd>
+        <dt>Launch</dt><dd>Drag down on the right side while the ball is in the BOOT lane, then let go. Further pull, harder shot. A tap gives a standard shot.</dd>
+        <dt>Nudge</dt><dd>Bump the phone. A sideways bump pushes the ball the other way; a forward bump lifts it. iOS asks to allow motion when you tap BOOT. Turn it off with BUMP NUDGE on the start screen.</dd>
+        <dt>Tilt</dt><dd>Four nudges in a few seconds is TILT: the flippers go dead and you lose that ball&rsquo;s bonus. DANGER is your warning.</dd>
+      </dl>
+      <h3>Scoring</h3>
+      <dl>
+        <dt>L-O-A-D lanes</dt><dd>Light all four to raise the bonus multiplier: 2&times;, 4&times;, 8&times;, 16&times;. Flipping shifts the lit lanes.</dd>
+        <dt>Punch card</dt><dd>Knock down all five drop targets: 10,000 and 2 core bits.</dd>
+        <dt>Bus ramp</dt><dd>2,500 and 1 core bit.</dd>
+        <dt>Core memory</dt><dd>Sink the saucer: 1,000 and 1 core bit. Eight bits make a byte: 50,000.</dd>
+        <dt>Tubes &amp; tape</dt><dd>Bumpers 100, slingshots 10, tape spinner 25 a spin.</dd>
+        <dt>Balls</dt><dd>Three balls. A ball that drains in the first 8 seconds is saved. Each ball ends with its bonus times the multiplier.</dd>
+      </dl>
+      <h3>Keyboard</h3>
+      <p>Z / &larr; left flipper, / / &rarr; right flipper, hold Space to pull and release to launch, N nudges, P pauses.</p>
+    </div>
     <button id="bHelpClose" class="sec">CLOSE</button>
   </div>
   <div id="menu">
@@ -509,6 +537,7 @@ document.addEventListener('dblclick',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>e.preventDefault());
 const KL=['KeyZ','ShiftLeft','ArrowLeft'],KR=['Slash','ShiftRight','ArrowRight'],KP=['Space','Enter','ArrowDown'];
 window.addEventListener('keydown',e=>{
+  if(!$('help').hidden){if(e.code==='Escape'){e.preventDefault();showHelp(false)}return}
   if(e.repeat)return;SND.init();
   if(e.code==='Escape'||e.code==='KeyP'){if(G.state==='play')pause();else if(G.state==='paused')resume();return}
   if(G.state!=='play'){if(KP.includes(e.code)){e.preventDefault();primary()}return}
