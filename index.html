@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Model 8">
-<meta name="theme-color" content="#050607">
+<meta name="theme-color" content="#050607"><!-- ignored by iOS 27; kept for Android and desktop -->
 <meta name="description" content="Model 8 — a vintage-computer pinball table from DIM8 Labs. No ads, no tracking, no leaderboards.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Model 8</title>
 <style>
-:root{color-scheme:dark;--vfd:#6dffd0;--amber:#ffb347;--ink:#cfe9e1;--bg:#050607;--panel:#0f1516;--line:#2a3a3a}
+:root{color-scheme:dark;--vfd:#6dffd0;--amber:#ffb347;--ink:#cfe9e1;--bg:#050607;--hud:#0a0d0e;--panel:#0f1516;--line:#2a3a3a}
 html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;overscroll-behavior:none}
 body{position:fixed;inset:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;color:var(--ink)}
 #probe{position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-/* iOS 27 PWA blur workaround (not an Apple API): a solid strip at the very top stops the status-bar blur.
-   Only shows in the installed iOS app. To remove: delete this block, the matching #probe rule inside it, and #topfix in <body>. */
+/* iOS 27 status bar workaround (WebKit bug 325807; not an Apple-documented fix).
+   No status-bar-style meta, so iOS draws a solid bar and the app starts below it.
+   This strip gives iOS a solid top color to match the bar to: --hud, the score panel's color.
+   To remove: delete this block and #topfix in <body>. */
 #topfix{display:none}
-@media (display-mode: standalone){@supports (-webkit-touch-callout: none){
-  #topfix{display:block;position:fixed;top:0;left:0;right:0;height:max(12px, env(safe-area-inset-top,0px));background:var(--bg);pointer-events:none;z-index:9500}
-  #probe{padding-top:max(12px, env(safe-area-inset-top,0px))}
-}}
+@media (display-mode: standalone){
+  #topfix{display:block;position:fixed;top:0;left:0;right:0;height:12px;background:var(--hud);pointer-events:none;z-index:0}
+}
 #stage{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;touch-action:none}
 canvas{display:block;width:390px;height:844px;touch-action:none}
 button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
@@ -39,8 +39,11 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 .sec{flex:1;height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);font-size:13px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:10px}
 .sec.muted{border-color:var(--amber);background:#2a1d0c;color:var(--amber)}
 .sec svg{width:20px;height:20px}
-#help{font-size:12.5px;line-height:1.6;color:#9fc2b8;background:#0a0d0e;border:1px solid #1e2a2b;border-radius:12px;padding:12px 14px;margin:0}
+#help{position:absolute;left:20px;right:20px;top:96px;z-index:5;display:flex;flex-direction:column;gap:16px;background:#0a0d0e;border:1px solid #1e2a2b;border-radius:14px;padding:20px}
+#help p{margin:0;font-size:14px;line-height:1.65;color:#9fc2b8}
 #help b{color:var(--vfd);font-weight:400}
+#bHelpClose{flex:none}
+#bBump{flex:none;height:44px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -51,6 +54,10 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
   <canvas id="cv" aria-label="Model 8 pinball table" role="img"></canvas>
   <button id="bMute" class="hudbtn" aria-label="Mute sound" hidden></button>
   <button id="bPause" class="hudbtn" aria-label="Pause" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+  <div id="help" hidden>
+    <p><b>Hold left / right half</b> of the screen for each flipper. <b>Drag down on the right</b> to pull the plunger, let go to launch (a tap gives a standard shot). Light <b>L-O-A-D</b> to raise the bonus multiplier &mdash; flipping moves the lit lanes. Knock down the <b>punch card</b>, ride the <b>bus ramp</b> and sink the <b>core memory</b> saucer to store bits. Eight bits is a byte. <b>Bump the phone</b> to nudge the table &mdash; overdo it and it&rsquo;s TILT.</p>
+    <button id="bHelpClose" class="sec">CLOSE</button>
+  </div>
   <div id="menu">
     <button id="bPrimary">BOOT</button>
     <button id="bNew" class="sec" hidden>NEW GAME</button>
@@ -58,7 +65,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
       <button id="bSound" class="sec"></button>
       <button id="bHelp" class="sec" aria-expanded="false">HOW TO PLAY</button>
     </div>
-    <p id="help" hidden><b>Hold left / right half</b> of the screen for each flipper. <b>Drag down on the right</b> to pull the plunger, let go to launch (a tap gives a standard shot). Light <b>L-O-A-D</b> to raise the bonus multiplier &mdash; flipping moves the lit lanes. Knock down the <b>punch card</b>, ride the <b>bus ramp</b> and sink the <b>core memory</b> saucer to store bits. Eight bits is a byte. <b>Flick a finger upward</b> to nudge the table &mdash; overdo it and it&rsquo;s TILT.</p>
+    <button id="bBump" class="sec" aria-pressed="false"></button>
   </div>
 </div>
 <script>
@@ -66,6 +73,8 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 /* ===== constants ===== */
 const W=390,H=844,FY=150,FH=640;
 const BR=8, GRAV=1250, HSTEP=1/720, MAXV=2400, FLIP_GRIP=2.5;
+// Bump-to-nudge: phone acceleration (m/s², gravity removed) that counts as a bump. Raise it if flipping sets off nudges.
+const BUMP_G=11;
 const VFD='#6dffd0',VFD_OFF='#0f2b25',AMBER='#ffb347',AMBER_OFF='#3a2a14',RED='#ff6a5c',INK='#cfe9e1',DIM='#8fb5aa';
 const FONT='ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace';
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -284,9 +293,11 @@ function launch(){
   if(G.state!=='play'||!ballInLane()||ball.y<540)return;
   const power=p>0.08?p:0.7; ball.vy=-(1250+1300*power); ball.vx=0; G.saveT=8; SND.launch();
 }
-function nudge(dir){
+// dir: -1 ball shoved left, 1 right, 0 straight up. power 0..1
+function nudge(dir,power){
   if(G.state!=='play'||ball.state!=='live'||G.tilted||G.nudgeCD>0)return;
-  G.nudgeCD=0.35;ball.vy-=260;ball.vx+=(dir||(Math.random()<0.5?-1:1))*90;G.shake=4;SND.nudge();
+  const pw=power===undefined?0.7:clamp(power,0.35,1);
+  G.nudgeCD=0.4;ball.vy-=260+260*pw;ball.vx+=(dir||0)*(80+140*pw);G.shake=5+5*pw;SND.nudge();
   G.tiltW++;G.tiltT=3;
   if(G.tiltW>=4){G.tilted=true;G.saveT=0;flips.forEach(f=>f.pressed=false);showMsg('TILT',3);SND.tilt()}
   else if(G.tiltW===3)showMsg('DANGER',1.5);
@@ -433,7 +444,7 @@ function drawFooter(){
   ctx.fillStyle='#050607';ctx.fillRect(0,FY+FH,W,H-FY-FH);ctx.fillStyle='#141b1c';ctx.fillRect(0,FY+FH,W,1);
   ctx.font='11px '+FONT;
   if(G.state==='play'&&ballInLane()){ctx.textAlign='center';ctx.fillStyle=AMBER;ctx.fillText('DRAG DOWN ON RIGHT TO BOOT ↓',W/2,821)}
-  else if(G.state==='play'){ctx.fillStyle='#4f6b64';ctx.textAlign='left';ctx.fillText('◀ HOLD LEFT',18,821);ctx.textAlign='right';ctx.fillText('HOLD RIGHT ▶',W-18,821);ctx.textAlign='center';ctx.fillStyle='#3a5049';ctx.fillText('FLICK ↑ NUDGE',W/2,821)}
+  else if(G.state==='play'){ctx.fillStyle='#4f6b64';ctx.textAlign='left';ctx.fillText('◀ HOLD LEFT',18,821);ctx.textAlign='right';ctx.fillText('HOLD RIGHT ▶',W-18,821);if(MOTION.on){ctx.textAlign='center';ctx.fillStyle='#3a5049';ctx.fillText('BUMP = NUDGE',W/2,821)}}
 }
 function drawTitle(){
   ctx.fillStyle='rgba(5,6,7,.86)';ctx.fillRect(0,0,W,H);
@@ -485,11 +496,9 @@ cv.addEventListener('pointerdown',e=>{
   e.preventDefault();SND.init();if(G.state!=='play')return;
   const p=toLogical(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}
   if(p.x>=W/2&&ballInLane()&&!plunger.active){plunger.active=true;plunger.pull=0;ptrs.set(e.pointerId,{k:'P',y0:p.y});return}
-  const k=p.x<W/2?0:1;ptrs.set(e.pointerId,{k,x0:p.x,y0:p.y,t0:performance.now(),flicked:false});setFlip(k,true);
+  const k=p.x<W/2?0:1;ptrs.set(e.pointerId,{k});setFlip(k,true);
 });
-cv.addEventListener('pointermove',e=>{const q=ptrs.get(e.pointerId);if(!q)return;const p=toLogical(e);
-  if(q.k==='P'){plunger.pull=clamp((p.y-q.y0)/110,0,1);return}
-  if(!q.flicked&&q.y0-p.y>45&&performance.now()-q.t0<250){q.flicked=true;nudge(q.k===0?1:-1)}});
+cv.addEventListener('pointermove',e=>{const q=ptrs.get(e.pointerId);if(q&&q.k==='P'){const p=toLogical(e);plunger.pull=clamp((p.y-q.y0)/110,0,1)}});
 function ptrEnd(e){const q=ptrs.get(e.pointerId);if(!q)return;ptrs.delete(e.pointerId);
   if(q.k==='P'){launch();return}
   let still=false;ptrs.forEach(o=>{if(o.k===q.k)still=true});if(!still)setFlip(q.k,false)}
@@ -514,31 +523,69 @@ window.addEventListener('keyup',e=>{
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.state==='play')pause()});
 
+
+/* ===== bump-to-nudge (motion sensor) ===== */
+// iOS asks permission once per launch; the request has to come from a tap, so it rides on BOOT / RESUME and the toggle.
+const MOTION={want:store.get('bump',true),state:'off',on:false,peak:null,listening:false,
+  supported(){return typeof window.DeviceMotionEvent!=='undefined'},
+  label(){if(!this.supported())return 'BUMP NUDGE: N/A';if(!this.want)return 'BUMP NUDGE: OFF';
+    if(this.state==='denied')return 'BUMP NUDGE: BLOCKED';return 'BUMP NUDGE: ON'},
+  start(){
+    if(!this.want||!this.supported()||this.listening)return;
+    const go=()=>{window.addEventListener('devicemotion',onMotion);this.listening=true;this.state='on';this.on=true;updateUI()};
+    const DM=window.DeviceMotionEvent;
+    if(typeof DM.requestPermission==='function'){
+      DM.requestPermission().then(r=>{if(r==='granted')go();else{this.state='denied';this.on=false;updateUI()}}).catch(()=>{this.state='denied';this.on=false;updateUI()});
+    }else go();
+  },
+  stop(){window.removeEventListener('devicemotion',onMotion);this.listening=false;this.on=false;this.state='off'}
+};
+let lastAG=null;
+function onMotion(e){
+  let ax,ay;
+  const a=e.acceleration;
+  if(a&&a.x!==null&&a.y!==null){ax=a.x;ay=a.y}
+  else{const g=e.accelerationIncludingGravity;if(!g||g.x===null)return;   // no gravity-free reading: use the change between samples
+    if(!lastAG){lastAG={x:g.x,y:g.y};return}ax=g.x-lastAG.x;ay=g.y-lastAG.y;lastAG={x:g.x,y:g.y}}
+  bump(ax,ay);
+}
+// A bump is a spike over BUMP_G. The first big sideways jolt sets the direction:
+// shove the phone right and the table slides right under the ball, so the ball goes left.
+function bump(ax,ay){
+  const mag=Math.hypot(ax,ay);
+  if(mag<BUMP_G)return;
+  const dir=Math.abs(ax)>Math.abs(ay)*0.6?(ax>0?-1:1):0;
+  nudge(dir,(mag-BUMP_G)/(BUMP_G*1.5)+0.35);
+}
 /* ===== UI ===== */
 const $=id=>document.getElementById(id);
 const ICON_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
 const ICON_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M16 9l6 6M22 9l-6 6"/></svg>';
 function updateUI(){
   const play=G.state==='play',m=SND.muted;
+  if(play)$('help').hidden=true;
   $('bMute').hidden=!play;$('bPause').hidden=!play;$('menu').hidden=play;
   $('bMute').innerHTML=m?ICON_OFF:ICON_ON;$('bMute').classList.toggle('muted',m);$('bMute').setAttribute('aria-label',m?'Sound off. Turn sound on':'Mute sound');
+  $('bBump').textContent=MOTION.label();$('bBump').classList.toggle('muted',MOTION.state==='denied');$('bBump').setAttribute('aria-pressed',String(MOTION.want));
   $('bSound').innerHTML=(m?ICON_OFF:ICON_ON)+(m?'SOUND OFF':'SOUND ON');$('bSound').classList.toggle('muted',m);$('bSound').setAttribute('aria-pressed',String(!m));
   $('bPrimary').textContent=G.state==='paused'?'RESUME':'BOOT';$('bNew').hidden=G.state!=='paused';
 }
 function toggleMute(){SND.init();SND.setMuted(!SND.muted);updateUI()}
-function primary(){SND.init();if(G.state==='paused')resume();else{newGame();updateUI()}}
+function primary(){SND.init();MOTION.start();if(G.state==='paused')resume();else{newGame();updateUI()}}
 function pause(){if(G.state!=='play')return;G.state='paused';flips.forEach(f=>f.pressed=false);ptrs.clear();plunger.active=false;plunger.key=false;updateUI()}
 function resume(){G.state='play';last=performance.now();acc=0;updateUI()}
 $('bMute').addEventListener('click',toggleMute);$('bSound').addEventListener('click',toggleMute);
 $('bPause').addEventListener('click',pause);$('bPrimary').addEventListener('click',primary);
 $('bNew').addEventListener('click',()=>{SND.init();newGame();updateUI()});
-$('bHelp').addEventListener('click',()=>{const h=$('help');h.hidden=!h.hidden;$('bHelp').setAttribute('aria-expanded',String(!h.hidden))});
+$('bBump').addEventListener('click',()=>{MOTION.want=!MOTION.want;store.set('bump',MOTION.want);if(MOTION.want)MOTION.start();else MOTION.stop();updateUI()});
+function showHelp(on){$('help').hidden=!on;$('bHelp').setAttribute('aria-expanded',String(on));if(on)$('bHelpClose').focus();else $('bHelp').focus()}
+$('bHelp').addEventListener('click',()=>showHelp($('help').hidden));$('bHelpClose').addEventListener('click',()=>showHelp(false));
 
 layout();updateUI();requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
 
 /* test hook */
-window.M8={G,ball,flips,plunger,step,newGame,launch,setFlip,ballInLane,HSTEP,
+window.M8={G,ball,flips,plunger,step,newGame,launch,setFlip,ballInLane,HSTEP,bump,MOTION,
   sim(sec){const n=Math.round(sec/HSTEP);for(let i=0;i<n;i++)step(HSTEP)}};
 </script>
 </body>
